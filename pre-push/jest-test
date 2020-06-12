@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+
+
+set -E -o functrace
+
+
+__SOURCE__="${BASH_SOURCE[0]}"
+while [[ -h "${__SOURCE__}" ]]; do
+    __SOURCE__="$(find "${__SOURCE__}" -type l -ls | sed -n 's@^.* -> \(.*\)@\1@p')"
+done
+__NAME__="${__SOURCE__//*(*\/|.*)/}"
+__DIR__="$(cd -P "$(dirname "${__SOURCE__}")" && pwd)"
+__PARENT_DIR__="$(dirname "${__DIR__}")"
+__AUTHOR__='S0AndS0'
+__DESCRIPTION__='Git hook for running "npm run jest-test" locally before push'
+__USAGE_TIPS__=(
+    '## Run via git-push-wh script'
+    'git push-wh srv gh-pages'
+    '## Or run with additional build arguments'
+    "JEST_TEST_ARGS='--clear-cache' git push-wh srv gh-pages"
+    '## Or overwrite NPM run script name'
+    "NPM_RUN_ARGS='test' git push-wh srv gh-pages"
+    '#> Note, JEST_TEST_ARGS and NPM_RUN_ARGS environment variables may be combined'
+    'Default NPM command is -> npm run jest-test'
+)
+
+
+## Provides: failure
+source "${__PARENT_DIR__}/shared_functions/modules/trap-failure/failure.sh"
+trap 'failure "LINENO" "BASH_LINENO" "${BASH_COMMAND}" "${?}"' ERR
+
+## Provides: __license__ <description> <author>
+source "${__PARENT_DIR__}/shared_functions/license.sh"
+
+## Provides: __usage__ <message>
+source "${__PARENT_DIR__}/shared_functions/pre-push/usage.sh"
+
+
+(("${#HELP}")) && {
+    __usage__
+    exit 0
+}
+
+(("${#LICENSE}")) && {
+    __license__
+    exit 0
+}
+
+
+_npm_run_args='jest-test'
+(("${#NPM_RUN_ARGS}")) && {
+    _npm_run_args="${NPM_RUN_ARGS}"
+}
+
+
+(("${#JEST_TEST_ARGS}")) && {
+    _npm_run_args+=" ${JEST_TEST_ARGS}"
+}
+
+
+(("${VERBOSE}")) && {
+    printf '_remote -> %s\n' "${_remote}"
+    printf '_host -> %s\n' "${_host}"
+    printf '_repo -> %s\n' "${_repo}"
+    printf '_npm_run_args -> %s\n' "${_npm_run_args}"
+    printf 'npm run %s\n' "${_npm_run_args}"
+}
+
+
+npm run ${_npm_run_args}
