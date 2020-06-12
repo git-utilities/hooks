@@ -80,6 +80,7 @@ _acceptable_args=(
 ## Pass arrays by reference/name to the `argument_parser` function
 argument_parser '_passed_args' '_acceptable_args'
 _exit_status="$?"
+_hook_target="${_hook_target//*(*\/|.*)/}"
 
 
 if ((_help)) || ((_exit_status)); then
