@@ -182,7 +182,7 @@ ___
 
 
 ```
-Collection of Git hooks Bash scripts for pre&#x2F;post push automation
+Documentation for collection of Git hooks for automation
 Copyright (C) 2020 S0AndS0
 
 This program is free software: you can redistribute it and/or modify
