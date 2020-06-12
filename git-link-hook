@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+
+
+## Find true directory this script resides in
+__SOURCE__="${BASH_SOURCE[0]}"
+while [[ -h "${__SOURCE__}" ]]; do
+    __SOURCE__="$(find "${__SOURCE__}" -type l -ls | sed -n 's@^.* -> \(.*\)@\1@p')"
+done
+__NAME__="${__SOURCE__//*(*\/|.*)/}"
+__DIR__="$(cd -P "$(dirname "${__SOURCE__}")" && pwd)"
+__AUTHOR__='S0AndS0'
+__DESCRIPTION__=''
+
+
+set -E -o functrace
+
+
+## Provides: failure
+source "${__DIR__}/shared_functions/modules/trap-failure/failure.sh"
+trap 'failure "LINENO" "BASH_LINENO" "${BASH_COMMAND}" "${?}"' ERR
+
+## Provides: argument_parser <arg-array-reference> <acceptable-arg-reference>
+source "${__DIR__}/shared_functions/modules/argument-parser/argument-parser.sh"
+
+## Provides: __license__ <description> <author>
+source "${__DIR__}/shared_functions/license.sh"
+
+
+__usage__() {
+    local _message="${1}"
+    cat <<EOF
+${__DESCRIPTION__}
+
+
+# ___ Parameters ___ #
+
+
+--help        -h ${_help}
+
+    Prints this message and exits
+
+--license     -l
+
+    Prints copyright for this script and exits
+
+--clobber ${_clobber}
+
+    If set, removes existing hook target from Git hooks directory
+
+--hook-name   --name    -n ${_hook_name}
+
+    Name of Git hook, eg. jekyll-build
+
+--hook-target --target  -t ${_hook_target}
+
+    Target for Git operation, eg. post-push
+
+# ___ Example Usage ___ #
+
+cd ~/git/hub/__org__/__repo__
+
+git link-hook --target ${_hook_target:-post-push} --name ${_hook_name:-jekyll-build}
+EOF
+    (("${#_message}")) && {
+        printf >&2 '\n\n## Error: %s\n' "${_message}"
+    }
+}
+
+
+## Save passed arguments and acceptable arguments to Bash arrays
+_passed_args=("${@:?No arguments provided}")
+_acceptable_args=(
+    '--help|-h:bool'
+    '--license|-l:bool'
+    '--clobber:bool'
+    '--hook-name|--name|-n:print'
+    '--hook-target|--target|-t:print'
+)
+
+## Pass arrays by reference/name to the `argument_parser` function
+argument_parser '_passed_args' '_acceptable_args'
+_exit_status="$?"
+
+
+if ((_help)) || ((_exit_status)); then
+    __usage__ "${_exit_status}"
+    exit "${_exit_status}"
+elif ((_license)); then
+    __license__
+    exit 0
+fi
+
+
+_hook_source="${__DIR__}/${_hook_target}/${_hook_name}"
+
+if [[ -d "${PWD}/.git/hooks" ]]; then
+    _hook_destination="${PWD}/.git/hooks/${_hook_target}"
+elif [[ -d "${PWD}/hooks" ]]; then
+    _hook_destination="${PWD}/hooks/${_hook_target}"
+else
+    __usage__ ""
+    exit 1
+fi
+
+
+[[ -f "${_hook_source}" ]] || {
+    __usage__ ""
+    exit 1
+}
+
+[[ -e "${_hook_source}" ]] || {
+    __usage__ ""
+    exit 1
+}
+
+[[ -f "${_hook_destination}" ]] && {
+    ((_clobber)) && {
+        (("${#VERBOSE}")) && {
+            rm --verbose "${_hook_destination}"
+        } || {
+            rm "${_hook_destination}"
+        }
+    } || {
+        __usage__ ""
+        exit 1
+    }
+}
+
+
+(("${#VERBOSE}")) && {
+    ln --verbose --symbolic "${_hook_source}" "${_hook_destination}"
+} || {
+    ln -s "${_hook_source}" "${_hook_destination}"
+}
