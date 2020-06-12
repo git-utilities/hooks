@@ -60,7 +60,7 @@ _repo="$(git_repo "${_remote}")"
     printf '_remote -> %s\n' "${_remote}"
     printf '_host -> %s\n' "${_host}"
     printf '_repo -> %s\n' "${_repo}"
-    printf '_BUILD_ARGS -> %s\n' "${_BUILD_ARGS[*]}"
+    printf '_BUILD_ARGS -> %s\n' "${_BUILD_ARGS}"
 }
 
 
