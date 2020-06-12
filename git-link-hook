@@ -105,12 +105,12 @@ fi
 
 
 [[ -f "${_hook_source}" ]] || {
-    __usage__ ""
+    __usage__ "Hook script file does not exist -> ${_hook_source}"
     exit 1
 }
 
 [[ -e "${_hook_source}" ]] || {
-    __usage__ ""
+    __usage__ "Hook script file is not executable -> ${_hook_source}"
     exit 1
 }
 
@@ -122,7 +122,7 @@ fi
             rm "${_hook_destination}"
         }
     } || {
-        __usage__ ""
+        __usage__ "Hook destination already exists and clobber is false"
         exit 1
     }
 }
